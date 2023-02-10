@@ -1,0 +1,8 @@
+line 83 In Function Log.Build:  print "XES Warning! Classifiers not set. \n"
+Korrektur  Log print("XES Warning! Classifiers not set. \n"), es fehlten die ()
+
+__str__() funktionieren nicht, womöglich alte Version...
+geben alle Noen zurück, weil ET.dump() None zurück gibt
+Korrektur durch https://stackoverflow.com/a/15304351
+dump ersetzen durch: .tostring(self.xml, encoding='unicode', method='xml')
+und ET.tostring(self.log, "utf-8") durch ET.tostring(self.log, encoding='unicode', method='xml')

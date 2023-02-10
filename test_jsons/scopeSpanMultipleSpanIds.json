@@ -1,0 +1,55 @@
+{
+  "scope": {
+    "name": "io.quarkus.opentelemetry"
+  },
+  "spans": [
+    {
+      "traceId": "3019cbf7675200315b85ec481be38f4c",
+      "spanId": "91f0fe0efe36b608",
+      "parentSpanId": "2214b46d9d9445fb",
+      "name": "SELECT Hero",
+      "kind": "SPAN_KIND_CLIENT",
+      "startTimeUnixNano": "1675518981741190741",
+      "endTimeUnixNano": "1675518982192147062",
+      "attributes": [
+        {
+          "key": "db.statement",
+          "value": {
+            "stringValue": "select count(*) as col_0_0_ from Hero hero0_"
+          }
+        },
+        {
+          "key": "db.statement2",
+          "value": {
+            "stringValue": "select count(*) as col_0_0_ from Hero hero0_"
+          }
+        }
+      ],
+      "status": {}
+    },
+    {
+      "traceId": "abcde",
+      "spanId": "532bbeaf4d92f9b5",
+      "parentSpanId": "2214b46d9d9445fb",
+      "name": "SELECT Hero",
+      "kind": "SPAN_KIND_CLIENT",
+      "startTimeUnixNano": "1675518982188803070",
+      "endTimeUnixNano": "1675518982647186254",
+      "attributes": [
+        {
+          "key": "db.statement",
+          "value": {
+            "stringValue": "select hero0_.id as id1_0_, hero0_.level as level2_0_, hero0_.name as name3_0_, hero0_.otherName as othernam4_0_, hero0_.picture as picture5_0_, hero0_.powers as powers6_0_ from Hero hero0_ limit $? offset $?"
+          }
+        },
+        {
+          "key": "db.system",
+          "value": {
+            "stringValue": "heroes_database"
+          }
+        }
+      ],
+      "status": {}
+    }
+  ]
+}
