@@ -5,12 +5,14 @@ from xes import Event
 from progress.bar import Bar
 from datetime import datetime
 
-removedAttributes = list()
-
 warnings = list()
 
 def addOtelTraceToXesEventLog(parsedJson: list, log: Log):
-    removedAttributes = list()
+    """ Extract Traces and Events from JSON Output of OTC File Exporter, 
+        where every single Line in the JSON FIle contains an JSON object.
+        Events in the extracted Traces are sorted.
+        Extracted Traces are added to the given Event Log. """
+    warnings = list()
     # Trace and Event korrelation: traceID is Key and EventList is value
     # indiviual Traces or their tracid could exist in several traces  
     traceDict = dict()
