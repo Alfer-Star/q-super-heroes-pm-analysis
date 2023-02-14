@@ -14,10 +14,14 @@ def processJSONFile(file: TextIOWrapper):
 def assertFilesHavingOtelJsonStructure(directory: str):
     traceFileLIst = os.walk(directory)
     for (dir_path, dir_names, file_names) in traceFileLIst:
-        for fileName in [fp for fp in file_names if fp != '.gitkeep']:
+        for fileName in [fp for fp in file_names if fp != '.gitignore']:
             filePath=dir_path + '/' + fileName
             fTrace = open(filePath, 'r')
-            LinesAsParsedJson = processJSONFile(fTrace)
+            try:
+                LinesAsParsedJson = processJSONFile(fTrace)
+            except:
+                raise Exception("""Something went wrong in ongoing File Assertion of files in ./traces on Processing Jsons in file line per Line!
+                                Check if all files having an json Structure except ignored files.""")
             for line in LinesAsParsedJson:
                 try:
                     assertOtelJsonStructure(line)
