@@ -30,6 +30,8 @@ eventLog.classifiers = [
     xes.Classifier(name="time:timestamp",keys="time:timestamp"),
     xes.Classifier(name="identity:id",keys="identity:id"),
     xes.Classifier(name="lifecycle:transition",keys="lifecycle:transition"),
+    xes.Classifier(name="SpanId",keys="spanId"),
+    xes.Classifier(name="parentSpan",keys="parentSpanId"),
 ]
 
 addOtelTraceToXesEventLog(parsedTraces, eventLog)
