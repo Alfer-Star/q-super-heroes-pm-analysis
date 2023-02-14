@@ -61,7 +61,7 @@ def _handleScopeSpansAttribute(scopeSpan: dict, traceDict: dict, resSpecificAtts
         startEvent = xes.Event()
         startEvent.attributes = eventAtts + resSpecificAtts
         startEvent.add_attribute(xes.Attribute('string','identity:id', spanId +'-1'))
-        endEvent.add_attribute(xes.Attribute('string','spanId', spanId))
+        startEvent.add_attribute(xes.Attribute('string','spanId', spanId))
         startEvent.add_attribute(xes.Attribute('string','lifecycle:transition', 'start'))
         startEvent.add_attribute(startAtt)
         _appendToTraceDict(traceDict=traceDict, traceId=traceId, event=startEvent)
