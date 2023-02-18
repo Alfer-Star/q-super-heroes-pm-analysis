@@ -2,8 +2,10 @@ import xes
 from xes import Log
 from xes import Trace
 from xes import Event
+from xes import Attribute
 from progress.bar import Bar
 from datetime import datetime
+from datetime import timezone
 
 warnings = list()
 
@@ -25,6 +27,8 @@ def addOtelTraceToXesEventLog(parsedJson: list, log: Log):
         eventlist.sort(key = getEventTimestamp,reverse=False)
     print('Events Sorted')
                     
+    _addParentalActivityAttribute(traceDict)
+    print('ParentActivity Added')
     log.traces = _extractTraces(traceDict)
     
     print("following Warnings "+ str(len(warnings)) +" appeared:")
@@ -55,11 +59,13 @@ def _handleScopeSpansAttribute(scopeSpan: dict, traceDict: dict, resSpecificAtts
     spanList = dict(scopeSpan).get('spans')
     for span in spanList:
             # Span Ebene, create Events from Spans
-        [traceId,spanId, eventAtts, startAtt, endAtt]  = _handleSpansAttribute(span)
+        [traceId,spanId, name, eventAtts, startAtt, endAtt]  = _handleSpansAttribute(span)
         
         #Lifecycle start
         startEvent = xes.Event()
         startEvent.attributes = eventAtts + resSpecificAtts
+        # startEvent.add_attribute(xes.Attribute('string','concept:name', name +' start'))
+        startEvent.add_attribute(xes.Attribute('string','concept:name', name))
         startEvent.add_attribute(xes.Attribute('string','identity:id', spanId +'-1'))
         startEvent.add_attribute(xes.Attribute('string','spanId', spanId))
         startEvent.add_attribute(xes.Attribute('string','lifecycle:transition', 'start'))
@@ -69,6 +75,8 @@ def _handleScopeSpansAttribute(scopeSpan: dict, traceDict: dict, resSpecificAtts
         #Lifecycle complete
         endEvent = xes.Event()
         endEvent.attributes = eventAtts + resSpecificAtts
+        # endEvent.add_attribute(xes.Attribute('string','concept:name', name +' end'))
+        endEvent.add_attribute(xes.Attribute('string','concept:name', name))
         endEvent.add_attribute(xes.Attribute('string','identity:id', spanId +'-2'))
         endEvent.add_attribute(xes.Attribute('string','spanId', spanId))
         endEvent.add_attribute(xes.Attribute('string','lifecycle:transition', 'complete'))
@@ -76,7 +84,7 @@ def _handleScopeSpansAttribute(scopeSpan: dict, traceDict: dict, resSpecificAtts
         _appendToTraceDict(traceDict=traceDict, traceId=traceId, event=endEvent)
 
 def _handleSpansAttribute(spanDict: dict):
-    abcKey = {'name':'concept:name', "parentSpanId": 'parentID', "kind":"kind"}
+    abcKey = {"parentSpanId": 'parentID', "kind":"kind"}
     fixAttributes = [xes.Attribute('string', value , spanDict.get(key) ) for key, value in abcKey.items()] 
     spanAttDict = spanDict.get('attributes')  
     SpanAttributesXES = list()
@@ -85,6 +93,8 @@ def _handleSpansAttribute(spanDict: dict):
     
     spanId =  spanDict.get('spanId')
     
+    name = spanDict.get('name')
+    
     start = _extractNanoTimestampsAsISO(spanDict.get('startTimeUnixNano'))
     end = _extractNanoTimestampsAsISO(spanDict.get('endTimeUnixNano'))
     
@@ -92,7 +102,7 @@ def _handleSpansAttribute(spanDict: dict):
         warnings.append((spanId, 'start Value is greater than end Value!'))
     
     traceid = spanDict.get('traceId')            
-    return [traceid, spanId, fixAttributes + SpanAttributesXES, start, end]
+    return [traceid, spanId, name, fixAttributes + SpanAttributesXES, start, end]
 
 def _appendToTraceDict(traceDict, traceId, event):
     if traceId in traceDict:
@@ -103,7 +113,8 @@ def _appendToTraceDict(traceDict, traceId, event):
         traceDict[traceId]=[event]
         
 def _extractNanoTimestampsAsISO(time: str):
-    return xes.Attribute('date', 'time:timestamp', datetime.fromtimestamp( int(time) / 1e9).isoformat() )
+    timeInMS = int(time) / 1e9
+    return xes.Attribute('date', 'time:timestamp', datetime.fromtimestamp(timeInMS, tz=timezone.utc).isoformat())
     
 
 def _extractTraces(eventDict: dict) -> list:
@@ -115,7 +126,28 @@ def _extractTraces(eventDict: dict) -> list:
         trace.add_attribute(xes.Attribute(key="concept:name", type='string', value=traceID))
         traceList.append(trace)
     return traceList
-    
+  
+def _addParentalActivityAttribute(eventDict: dict):
+    for (traceID, eventList) in eventDict.items():
+        trace = xes.Trace()
+        trace.events = eventList
+        for event in eventList:
+            parentID = getParentAttribute(event).value
+            if(parentID != ''):
+                # Liste enthält Aktivität mehrfach, da das Evnt einmal als start und complete event existiert, daher nur ein element benötigt
+                parentNameAtt = [getCNameAttribute(parentEvent) for parentEvent in eventList if getSpanIDAttribute(parentEvent).value == parentID][0]
+                event.add_attribute(xes.Attribute(key="sbc", type='string', value=parentNameAtt.value))
+            
+            
+        
+def getParentAttribute(e: Event)-> Attribute:
+    return next(filter(lambda a: a.key == 'parentID', e.attributes))
+
+def getSpanIDAttribute(e: Event)-> Attribute:
+    return next(filter(lambda a: a.key == 'spanId', e.attributes))
+
+def getCNameAttribute(e: Event)-> Attribute:
+    return next(filter(lambda a: a.key == 'concept:name', e.attributes))
     
 ## Test Cases
 
