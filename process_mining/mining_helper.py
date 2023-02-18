@@ -25,7 +25,13 @@ def discoverPetriNet(log, view = False):
     return net, im, fm
     
 def discoverProcessMap(log, view = False):
-    dfg, start_activities, end_activities = pm4py.discover_dfg_typed(log)
+    dfg, start_activities, end_activities = pm4py.discover_dfg(log)
+    if view:
+        pm4py.view_dfg(dfg, start_activities, end_activities)
+    return dfg, start_activities, end_activities
+
+def discoverProcessDFGPerf(log, view = False):
+    dfg, start_activities, end_activities = pm4py.discover_performance_dfg(log)
     if view:
         pm4py.view_dfg(dfg, start_activities, end_activities)
     return dfg, start_activities, end_activities
@@ -33,7 +39,6 @@ def discoverProcessMap(log, view = False):
 def filterActivities(event):
     log =  pm4py.filter_activities_rework()
     
-    #TODO:
     dfRelation = [('/api/fights/randomfighters')] 
     
     pm4py.filter_directly_follows_relation(log,dfRelation)
