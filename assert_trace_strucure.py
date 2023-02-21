@@ -22,11 +22,11 @@ def assertFilesHavingOtelJsonStructure(directory: str):
             except:
                 raise Exception("""Something went wrong in ongoing File Assertion of files in ./traces on Processing Jsons in file line per Line!
                                 Check if all files having an json Structure except ignored files.""")
-            for line in LinesAsParsedJson:
+            for index, line in enumerate(LinesAsParsedJson):
                 try:
                     assertOtelJsonStructure(line)
-                except:
-                    print('File did not pass: ' + filePath)
+                except AssertionError as error:
+                    print('File "'+ filePath+'" Line ' +str(index)+ ' did not pass: ' + str(error) )
 
 
 def assertOtelJsonStructure(parsedJson: dict):
