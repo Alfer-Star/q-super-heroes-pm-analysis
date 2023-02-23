@@ -43,6 +43,37 @@ if __name__ == "__main__":
             pnmlPath = './process_mining/iterIV/IterIV_petri_net.pnml'
 
         petri_net, im, fm = pm4py.read_pnml(pnmlPath)
+        
+                ## Model Quality Discovery original Log
+
+        pathModelQ = './process_mining/'+naming+'/discovery_original_'+naming
+        try:
+            os.makedirs(pathModelQ)
+        except FileExistsError:
+        # directory already exists
+            pass
+        
+        fitness = pm4py.fitness_token_based_replay(log,petri_net, im, fm)
+        writeJsonFile(fitness, pathModelQ + "/log_fitness")
+        
+        conformance_diagnostics = pm4py.conformance_diagnostics_token_based_replay(log,petri_net, im, fm)
+        (unfitting_traces_discovery_original, fitting_traces_discovery_original) = exportConformanceDiagnosisAsJson(conformance_diagnostics, pathModelQ)
+
+        ## Model Quality Discovery filtered Log
+        
+        pathModelQ = './process_mining/'+naming+'/discovery_filtered_'+naming
+        try:
+            os.makedirs(pathModelQ)
+        except FileExistsError:
+        # directory already exists
+            pass
+        
+        fitness = pm4py.fitness_token_based_replay(filtered_log,petri_net, im, fm)
+        writeJsonFile(fitness, pathModelQ + "/log_fitness")
+        
+        conformance_diagnostics = pm4py.conformance_diagnostics_token_based_replay(log,petri_net, im, fm)         
+        (unfitting_traces_discovery, fitting_traces_discovery) = exportConformanceDiagnosisAsJson(conformance_diagnostics, pathModelQ)
+
 
         ## Conformance Checking
           

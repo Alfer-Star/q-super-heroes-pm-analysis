@@ -81,16 +81,21 @@ def exportConformanceDiagnosisAsJson(result: list, pathToDirectory: str):
     unfitting_traces = list()
     fitting_traces= list()
     for index, trace in enumerate(result):
+        trace['activated_transitions'] = [str(trans) for trans in trace['activated_transitions'] ]
+        trace['transitions_with_problems'] = [str(trans) for trans in trace['transitions_with_problems'] ]
+        trace['enabled_transitions_in_marking'] = [str(trans) for trans in trace['enabled_transitions_in_marking'] ]
+        trace['reached_marking'] = [str(trans) for trans in trace['reached_marking'] ]
+        
         if not trace.get('trace_is_fit'):
             unfitting_traces.append(trace)
-            writeJsonFile(str(trace), unfittingDirectory+'/trace_'+str(index))
+            writeJsonFile(trace, unfittingDirectory+'/trace_'+str(index))
         else:
             fitting_traces.append(trace)
-            writeJsonFile(str(trace), fittingDirectory+'/trace_'+str(index))
+            writeJsonFile(trace, fittingDirectory+'/trace_'+str(index))
         
     return unfitting_traces, fitting_traces
         
-def writeJsonFile(content: str, filePath: str):
+def writeJsonFile(content: dict, filePath: str):
     file = open(filePath+'.json', 'w+')
     jsonStr = json.dumps(content)
     file.write(jsonStr)
