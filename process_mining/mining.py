@@ -5,22 +5,37 @@ from pm4py.objects.petri_net.utils import petri_utils
 from mining_helper import *
 
 from os import mkdir
+#
+
+iterations = {'IterZero':[False,False,False,False], 'IterI': [True,False,False,False], 'IterII': [True,True,False,False],'IterIII':[True,True,True,False],'IterIV':[True,True,True,True]}
 
 #Generate BPMN Model from example xes files
 if __name__ == "__main__":
     
+    
     print('PM4Py Version: ' + pm4py.__version__)
     
-    finalModelEventLogPath ='C:/Users/alfer/Desktop/Dev Projects/ba-obs-pm/xes_export/discovery_with_new_classifier_utc_14_02.xes'
+    #for name, boolList in iterations.items():
+        #iterI,iterII,iterIII,iterIV = boolList
+        #naming =name
     
     log = pm4py.read_xes('C:/Users/alfer/Desktop/Dev Projects/ba-obs-pm/xes_export/discovery2_faultfree.xes')
-    
+
     iterI= True
     iterII= iterI and True
     iterIII= iterII and True
-    iterIV = True
+    iterIV = False
     
-    alphaAlg = False
+    naming = '_iterZero'
+    if(iterI): 
+        naming= '_iterI'
+    if(iterII):
+        naming='_iterII'
+    if(iterIII):
+        naming='_iterIII'
+    if(iterIV):
+        naming='_iterIV'
+
     
     filtered_log = log
     if iterI and not iterIV:
@@ -28,37 +43,35 @@ if __name__ == "__main__":
     if iterII:
         filtered_log = pm4py.filter_event_attribute_values(filtered_log, 'concept:name', ['/api/fights', '/api/fights/randomfighters'])
     if iterIII:
-        #filtered_log = pm4py.filter_variants_top_k(filtered_log, 10)
         filtered_log = pm4py.filter_directly_follows_relation(filtered_log, [('/api/heroes/random','HeroService.findRandomHero'),('/api/villain/random', 'VillainService.findRandomVillain'), ('/api/fights', 'fights send') ])
-    #filtered_log = pm4py.filter_start_activities(filtered_log, ['/api/fights', '/api/fights/randomfighters'])
+
+        
+    exportPath = 'process_mining/' +naming + '/' 
     
-    if alphaAlg:
-        # Model is really bad...
-        # does not show the two branches :(
-        petri_net= discoverPetriNetAlphaPlus(filtered_log, True)
+    try:
+        os.makedirs(exportPath)
+    except FileExistsError:
+    # directory already exists
+        pass
         
     bpmn_model = createBpmnModelFromLog(filtered_log, True)
+    pm4py.write_bpmn(bpmn_model, exportPath+naming+'_bpmn_model')
     
-    # keine neuen Informationen...
-    #transition_system = pm4py.discover_transition_system(log, view='multiset')
-    #pm4py.view_transition_system(transition_system)
-    
-    processMap = discoverProcessMap(filtered_log, True)
-    
-    #processMapPerf = discoverProcessDFGPerf(filtered_log, True)
-    
-    process_tree = discoverProcessTreeInductive(filtered_log)
+    dfg, start_activities, end_activities = discoverProcessMap(filtered_log, True)
+    #pm4py.write_dfg(dfg,start_activities, end_activities,exportPath+naming+'_dfg')
     
     petri_net, im, fm = discoverPetriNet(filtered_log, True)
+    pm4py.write_pnml(petri_net, im, fm, exportPath+naming+'_petri_net')
+    
     if False:
         transition = petri_utils.get_transition_by_name(petri_net, 'VillainService.findRandomVillain')
         print(transition)
+        
+        
     
-    ## Model Quality 
-    
-    printModelQ = False
-    
-    pathModelQ = './process_mining/discovery'
+    ## Model Quality Discovery original Log
+
+    pathModelQ = './process_mining/'+naming+'/discovery_original_'+naming
     try:
         os.makedirs(pathModelQ)
     except FileExistsError:
@@ -69,13 +82,23 @@ if __name__ == "__main__":
     writeJsonFile(fitness, pathModelQ + "/log_fitness")
     
     conformance_diagnostics = pm4py.conformance_diagnostics_token_based_replay(log,petri_net, im, fm)
-    unfitting_traces = [trace for trace in conformance_diagnostics if not trace.get('trace_is_fit')]
-    if printModelQ:
-        print('unfitting Traces: ' + str(len(unfitting_traces)))
-        for trace_diagnostic in unfitting_traces: 
-            print(trace_diagnostic)
-         
+    (unfitting_traces_discovery_original, fitting_traces_discovery_original) = exportConformanceDiagnosisAsJson(conformance_diagnostics, pathModelQ)
+
+    ## Model Quality Discovery filtered Log
+    
+    pathModelQ = './process_mining/'+naming+'/discovery_filtered_'+naming
+    try:
+        os.makedirs(pathModelQ)
+    except FileExistsError:
+    # directory already exists
+        pass
+    
+    fitness = pm4py.fitness_token_based_replay(log,petri_net, im, fm)
+    writeJsonFile(fitness, pathModelQ + "/log_fitness")
+    
+    conformance_diagnostics = pm4py.conformance_diagnostics_token_based_replay(log,petri_net, im, fm)         
     (unfitting_traces_discovery, fitting_traces_discovery) = exportConformanceDiagnosisAsJson(conformance_diagnostics, pathModelQ)
+
 
     ## Conformance Checking
     
@@ -90,10 +113,7 @@ if __name__ == "__main__":
         faulty_log = pm4py.filter_directly_follows_relation(faulty_log, [('/api/heroes/random','HeroService.findRandomHero'),('/api/villain/random', 'VillainService.findRandomVillain'), ('/api/fights', 'fights send') ])
     #filtered_log = pm4py.filter_start_activities(filtered_log, ['/api/fights', '/api/fights/randomfighters'])
     
-    
-    printConfCh = False
-    
-    pathConfCh = './process_mining/conf_checking'
+    pathConfCh = './process_mining/'+naming+'/conf_checking_'+naming
     try:
         os.makedirs(pathConfCh)
     except FileExistsError:
@@ -105,20 +125,14 @@ if __name__ == "__main__":
     
     conformance_diagnostics = pm4py.conformance_diagnostics_token_based_replay(faulty_log,petri_net, im, fm)
     unfitting_traces = [trace for trace in conformance_diagnostics if not trace.get('trace_is_fit')]
-    if printConfCh:
-        print('unfitting Traces: ' + str(len(unfitting_traces)))
-        for trace_diagnostic in unfitting_traces: 
-            print(trace_diagnostic)
         
     (unfitting_traces, fitting_traces) = exportConformanceDiagnosisAsJson(conformance_diagnostics, pathConfCh)
     
-    # Running Script Interactively: exec(open(mining.py).read())
-    
-    
-    faultList = openCSV('faultcsv.csv')
+    faultList = openCSV('./process_mining/faultcsv.csv')
     vFaults, fsFaults, fuFault = sortFaultList(faultList)
     
-    print('IAm Ready to use')
+    # Running Script Interactively: exec(open('mining.py').read())
+    print('I am ready to use!')
     
     
     

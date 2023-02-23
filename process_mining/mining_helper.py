@@ -37,6 +37,8 @@ def discoverPetriNet(log, view = False):
     return net, im, fm
 
 def discoverPetriNetAlphaPlus(log, view = False):
+                # Model is really bad...
+            # does not show the two branches :(
     net, im, fm  = pm4py.discover_petri_net_alpha_plus(log)
     if view:
         pm4py.view_petri_net(net)
@@ -76,13 +78,15 @@ def exportConformanceDiagnosisAsJson(result: list, pathToDirectory: str):
     os.mkdir(unfittingDirectory)
     os.mkdir(fittingDirectory)
     
-    unfitting_traces = [trace for trace in result if not trace.get('trace_is_fit')]
-    fitting_traces = [trace for trace in result if trace.get('trace_is_fit')]
-    
-    for index, uTrace in enumerate(unfitting_traces):
-        writeJsonFile(str(uTrace), unfittingDirectory+'/trace_'+str(index))
-    for index, uTrace in enumerate(fitting_traces):
-        writeJsonFile(str(uTrace), fittingDirectory+'/trace_'+str(index))
+    unfitting_traces = list()
+    fitting_traces= list()
+    for index, trace in enumerate(result):
+        if not trace.get('trace_is_fit'):
+            unfitting_traces.append(trace)
+            writeJsonFile(str(trace), unfittingDirectory+'/trace_'+str(index))
+        else:
+            fitting_traces.append(trace)
+            writeJsonFile(str(trace), fittingDirectory+'/trace_'+str(index))
         
     return unfitting_traces, fitting_traces
         
