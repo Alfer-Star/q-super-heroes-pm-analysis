@@ -8,7 +8,7 @@ from xes import Extension
 
 from assert_trace_strucure import processJSONFile, assertFilesHavingOtelJsonStructure
 
-jsonPath = './traces/otelcol_data.json'
+jsonPath = './traces/otelcol_data_faults.json'
   
 assertFilesHavingOtelJsonStructure('./traces')
 print('Traces are legitim!')

@@ -86,11 +86,12 @@ def _handleScopeSpansAttribute(scopeSpan: dict, traceDict: dict, resSpecificAtts
 def _handleSpansAttribute(spanDict: dict):
     abcKey = {"parentSpanId": 'parentID', "kind":"kind"}
     fixAttributes = [xes.Attribute('string', value , spanDict.get(key) ) for key, value in abcKey.items()] 
-    spanAttDict = spanDict.get('attributes')  
+    
     SpanAttributesXES = list()
-    
-    SpanAttributesXES = [xes.Attribute('string',dict.get('key'), str(dict.get('value'))) for dict in spanAttDict]
-    
+    if('attributes' in spanDict):
+        spanAttDict = spanDict.get('attributes')  
+        SpanAttributesXES = [xes.Attribute('string',dict.get('key'), str(dict.get('value'))) for dict in spanAttDict]
+        
     spanId =  spanDict.get('spanId')
     
     name = spanDict.get('name')
